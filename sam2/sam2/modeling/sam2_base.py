@@ -668,6 +668,12 @@ class SAM2Base(torch.nn.Module):
                 valid_indices = [] 
                 if frame_idx > 1:  # Ensure we have previous frames to evaluate
                     for i in range(frame_idx - 1, 1, -1):  # Iterate backwards through previous frames
+
+                        # checks to see whether or not frame actually exists
+                        # required for MOT
+                        if i not in output_dict["non_cond_frame_outputs"]:
+                            continue
+
                         iou_score = output_dict["non_cond_frame_outputs"][i]["best_iou_score"]  # Get mask affinity score
                         obj_score = output_dict["non_cond_frame_outputs"][i]["object_score_logits"]  # Get object score
                         kf_score = output_dict["non_cond_frame_outputs"][i]["kf_score"] if "kf_score" in output_dict["non_cond_frame_outputs"][i] else None  # Get motion score if available
