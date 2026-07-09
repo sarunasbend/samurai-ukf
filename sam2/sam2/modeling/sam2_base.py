@@ -18,6 +18,7 @@ from sam2.modeling.sam.transformer import TwoWayTransformer
 from sam2.modeling.sam2_utils import get_1d_sine_pe, MLP, select_closest_cond_frames
 
 from sam2.utils.kalman_filter import KalmanFilter
+from sam2.utils.unscented_filter import UnscentedKalmanFilter
 
 # a large negative value as a placeholder score for missing objects
 NO_OBJ_SCORE = -1024.0
@@ -199,9 +200,12 @@ class SAM2Base(torch.nn.Module):
         self.samurai_mode = samurai_mode
 
         # Init Kalman Filter
-        self.kf = KalmanFilter()
+        self.kf = UnscentedKalmanFilter(alpha=0.5, beta=2.0, kappa=0, n_x=12, n_m=4)
         self.kf_mean = None
         self.kf_covariance = None
+        self.W_m = None
+        self.W_c = None
+        self.Y_sigma = None
         self.stable_frames = 0
 
         # Debug purpose
@@ -436,7 +440,7 @@ class SAM2Base(torch.nn.Module):
                 self.frame_cnt += 1
                 self.stable_frames += 1
             elif self.stable_frames < self.stable_frames_threshold:
-                self.kf_mean, self.kf_covariance = self.kf.predict(self.kf_mean, self.kf_covariance)
+                self.kf_mean, self.kf_covariance, self.Y_sigma, self.W_m, self.W_c = self.kf.predict(self.kf_mean, self.kf_covariance)
                 best_iou_inds = torch.argmax(ious, dim=-1)
                 batch_inds = torch.arange(B, device=device)
                 low_res_masks = low_res_multimasks[batch_inds, best_iou_inds].unsqueeze(1)
@@ -449,7 +453,7 @@ class SAM2Base(torch.nn.Module):
                     y_max, x_max = non_zero_indices.max(dim=0).values
                     high_res_bbox = [x_min.item(), y_min.item(), x_max.item(), y_max.item()]
                 if ious[0][best_iou_inds] > self.stable_ious_threshold:
-                    self.kf_mean, self.kf_covariance = self.kf.update(self.kf_mean, self.kf_covariance, self.kf.xyxy_to_xyah(high_res_bbox))
+                    self.kf_mean, self.kf_covariance = self.kf.update(x=self.kf_mean, P=self.kf_covariance, Y_sigma=self.Y_sigma, W_m=self.W_c, W_c=self.W_c, z=self.kf.xyxy_to_xyah(high_res_bbox))
                     self.stable_frames += 1
                 else:
                     self.stable_frames = 0
@@ -457,7 +461,7 @@ class SAM2Base(torch.nn.Module):
                     sam_output_token = sam_output_tokens[batch_inds, best_iou_inds]
                 self.frame_cnt += 1
             else:
-                self.kf_mean, self.kf_covariance = self.kf.predict(self.kf_mean, self.kf_covariance)
+                self.kf_mean, self.kf_covariance, self.Y_sigma, self.W_m, self.W_c = self.kf.predict(self.kf_mean, self.kf_covariance)
                 high_res_multibboxes = []
                 batch_inds = torch.arange(B, device=device)
                 for i in range(ious.shape[1]):
@@ -495,7 +499,7 @@ class SAM2Base(torch.nn.Module):
                 if ious[0][best_iou_inds] < self.stable_ious_threshold:
                     self.stable_frames = 0
                 else:
-                    self.kf_mean, self.kf_covariance = self.kf.update(self.kf_mean, self.kf_covariance, self.kf.xyxy_to_xyah(high_res_multibboxes[best_iou_inds]))
+                    self.kf_mean, self.kf_covariance = self.kf.update(x=self.kf_mean, P=self.kf_covariance, Y_sigma=self.Y_sigma, W_m=self.W_c, W_c=self.W_c, z=self.kf.xyxy_to_xyah(high_res_multibboxes[best_iou_inds]))
         elif multimask_output and not self.samurai_mode:
             # take the best mask prediction (with the highest IoU estimation)
             best_iou_inds = torch.argmax(ious, dim=-1)
