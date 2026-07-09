@@ -5,7 +5,7 @@
 
 This project implements an alternative motion modelling scheme for the established zero-shot object tracker, SAMURAI, with the aim of improving SAMURAI’s tracking performance in scenarios where object motion is non-linear and irregular. The adaptation replaces the Kalman filter with the Unscented Kalman filter, while integrating a non-linear motion model.
 
-[![Watch the video](https://raw.githubusercontent.com/sarunasbend/samurai-ukf/assets/comparison_demo.mp4)]
+https://github.com/user-attachments/assets/691cc4a9-2844-45f0-a41a-17c92d6dd71f
 
 ## Getting Started
 
