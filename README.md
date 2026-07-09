@@ -1,15 +1,18 @@
-<div align="center">
+<div align="left">
 <img align="left" width="100" height="100" src="https://github.com/user-attachments/assets/1834fc25-42ef-4237-9feb-53a01c137e83" alt="">
 
-# Adaptation of SAMURAI for Non-linearity with the Unscented Kalman Filter.
+# Adaptation of SAMURAI for Non-linearity with the Unscented Kalman Filter
 
 This project implements an alternative motion modelling scheme for the established zero-shot object tracker, SAMURAI, with the aim of improving SAMURAI’s tracking performance in scenarios where object motion is non-linear and irregular. The adaptation replaces the Kalman filter with the Unscented Kalman filter, while integrating a non-linear motion model.
+
+[![Watch the video](https://raw.githubusercontent.com/sarunasbend/samurai-ukf/assets/comparison_demo.mp4)]
 
 ## Getting Started
 
 #### SAMURAI Installation 
 
 SAM 2 needs to be installed first before use. The code requires `python>=3.10`, as well as `torch>=2.3.1` and `torchvision>=0.18.1`. Please follow the instructions [here](https://github.com/facebookresearch/sam2?tab=readme-ov-file) to install both PyTorch and TorchVision dependencies. You can install **the SAMURAI version** of SAM 2 on a GPU machine using:
+
 ```
 cd sam2
 pip install -e .
