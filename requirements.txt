@@ -1,0 +1,9 @@
+matplotlib==3.7 
+tikzplotlib 
+jpeg4py 
+opencv-python 
+lmdb 
+pandas 
+scipy 
+loguru
+numpy
