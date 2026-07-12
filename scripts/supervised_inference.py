@@ -82,7 +82,7 @@ color = [
     (150, 0, 150)
 ]
 
-#  TODO : Add paths
+#  TODO : Add Dirs
 test_txt = ""
 video_root = ""
 pred_folder = ""
